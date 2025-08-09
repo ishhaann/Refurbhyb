@@ -41,6 +41,12 @@ CREATE TABLE Cart (
     FOREIGN KEY (item_id) REFERENCES Item(id) ON DELETE CASCADE
 );
 
+CREATE TABLE Session (
+    sid VARCHAR(36) PRIMARY KEY,
+    uid VARCHAR(36),
+    FOREIGN KEY (uid) REFERENCES User(uid) ON DELETE CASCADE
+)
+
 CREATE TABLE Metadata(
     "key" VARCHAR(50) PRIMARY KEY,
     "value" VARCHAR(50)
