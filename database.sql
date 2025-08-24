@@ -12,8 +12,8 @@ CREATE TABLE Category (
     name VARCHAR(50) UNIQUE
 );
 
-CREATE TABLE Condition (
-    condition CHAR PRIMARY KEY -- [A,B,C,D....]
+CREATE TABLE Conditions (
+    `condition` CHAR(1) PRIMARY KEY  -- [A, B, C, D ...]
 );
 
 CREATE TABLE Item (
@@ -24,10 +24,11 @@ CREATE TABLE Item (
     description VARCHAR(255),
     price INT,
     warranty DATETIME,
-    condition CHAR,
+    `condition` CHAR,
     seller VARCHAR(36),
+    quantity INT,
     FOREIGN KEY (category_id) REFERENCES Category(id) ON DELETE CASCADE,
-    FOREIGN KEY (condition) REFERENCES Condition(condition) ON DELETE CASCADE,
+    FOREIGN KEY (`condition`) REFERENCES Conditions(`condition`) ON DELETE CASCADE,
     FOREIGN KEY (seller) REFERENCES User(uid) ON DELETE CASCADE
 );
 
@@ -41,15 +42,31 @@ CREATE TABLE Cart (
     FOREIGN KEY (item_id) REFERENCES Item(id) ON DELETE CASCADE
 );
 
+--Seller will Update status like if payment successfull, shipped
+--Shipping Partner, Tracking Id,
+CREATE TABLE `Order` (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    uid VARCHAR(36), -- ID of user who bought the item
+    item_id VARCHAR(36), -- id from Item table
+    quantity INT DEFAULT 1, -- No of items
+    payment_success TINYINT DEFAULT 0, -- if customer done the payment
+    shipped TINYINT DEFAULT 0, -- if item is shipped(1) or not (0)
+    tracking_id VARCHAR(255) DEFAULT NULL, -- id to track shipment
+    shipping_partner VARCHAR(255) DEFAULT NULL, -- courier company
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (uid) REFERENCES User(uid) ON DELETE CASCADE,
+    FOREIGN KEY (item_id) REFERENCES Item(id) ON DELETE CASCADE
+);
+
 CREATE TABLE Session (
     sid VARCHAR(36) PRIMARY KEY,
     uid VARCHAR(36),
     FOREIGN KEY (uid) REFERENCES User(uid) ON DELETE CASCADE
-)
+);
 
 CREATE TABLE Metadata(
-    "key" VARCHAR(50) PRIMARY KEY,
-    "value" VARCHAR(50)
+    `key` VARCHAR(50) PRIMARY KEY,
+    `value` VARCHAR(50)
 ); -- Configuration KV
 
 INSERT INTO Metadata VALUES("Version", "0.0.1");

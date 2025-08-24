@@ -8,7 +8,7 @@ public class Database implements AutoCloseable {
 
     Database(String url) {
         try {
-            Class.forName("org.sqlite.JDBC");
+            Class.forName("com.mysql.cj.jdbc.Driver");
             conn = DriverManager.getConnection(url);
             System.out.println("Opened database successfully");
         } catch (Exception e) {
@@ -16,7 +16,7 @@ public class Database implements AutoCloseable {
         }
     }
 
-    String validate(String email, String password) {
+    public String validate(String email, String password) {
         String sql = "SELECT uid FROM User WHERE email=? AND password=?";
 
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -70,7 +70,7 @@ public class Database implements AutoCloseable {
         return null;
     }
 
-    String createUser(String email, String name, String phoneNo, String password, String address) {
+    public String createUser(String email, String name, String phoneNo, String password, String address) {
         String uid = UUID.randomUUID().toString();
         String sql = "INSERT INTO User VALUES (?,?,?,?,?,?)";
 
@@ -93,7 +93,7 @@ public class Database implements AutoCloseable {
 
     List<String> getConditions() {
         List<String> conditions = new ArrayList<>();
-        String sql = "SELECT condition FROM Condition";
+        String sql = "SELECT `condition` FROM Conditions";
 
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
@@ -126,13 +126,13 @@ public class Database implements AutoCloseable {
     }
 
     String addItem(String name, String model, int categoryId, String description,
-                   int price, String warranty, String condition, String seller) {
+                   int price, String warranty, String condition, String seller, int quantity) {
         String uuidv4 = UUID.randomUUID().toString();
 
         String sql = """
         INSERT INTO Item
-        (id, name, model, category_id, description, price, warranty, condition, seller)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (id, name, model, category_id, description, price, warranty, `condition`, seller, quantity)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """;
 
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -145,6 +145,7 @@ public class Database implements AutoCloseable {
             pstmt.setString(7, warranty);    // warranty (as TEXT in ISO 8601 format)
             pstmt.setString(8, condition);   // condition
             pstmt.setString(9, seller);      // seller
+            pstmt.setInt(10, quantity);      // quantity
 
             pstmt.executeUpdate();
             return uuidv4;
@@ -173,11 +174,11 @@ public class Database implements AutoCloseable {
         return items;
     }
 
-    List<Types.Item> searchItem(String keyword, int offset, int limit, Integer price) {
+    public List<Types.Item> searchItem(String keyword, int offset, int limit, Integer price) {
         List<Types.Item> items = new ArrayList<>();
 
         StringBuilder sql = new StringBuilder(
-                "SELECT * FROM Item WHERE (name LIKE ? OR model LIKE ? OR description LIKE ?)"
+                "SELECT * FROM Item WHERE quantity > 0 AND (name LIKE ? OR model LIKE ? OR description LIKE ?)"
         );
 
         if (price != null) {
@@ -213,7 +214,7 @@ public class Database implements AutoCloseable {
         return items;
     }
 
-    Types.User getUserProfile(String userId) {
+    public Types.User getUserProfile(String userId) {
         String sql = "SELECT * FROM User WHERE uid=?";
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, userId);
@@ -281,6 +282,10 @@ public class Database implements AutoCloseable {
 
         return cartItems;
     }
+
+    // ToDo: Add Orders
+    // Update Payment Status
+    // Update Tracking ID and Partner
 
     @Override
     public void close() throws SQLException {
