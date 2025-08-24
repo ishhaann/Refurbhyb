@@ -1,81 +1,27 @@
 package org.example;
 
-import javax.swing.*;
-import java.awt.*;
-import org.example.ui.*;
-import org.example.Types.*;
+import com.sun.net.httpserver.HttpServer;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+
+import org.example.routes.LoginHandler;
+import org.example.routes.RootHandler;
 
 public class Main {
-    private JFrame frame;
-    private JPanel mainPanel;
-    private CardLayout cardLayout;
-    public Database db;
-    public User user;
-
-    public Main() {
+    public static Database db;
+    public static void main(String[] args) throws IOException {
         db = new Database("jdbc:mysql://localhost:3306/refurby?user=root&password=mysql");
-        db.getConditions();
-        frame = new JFrame("Simple App");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(600, 600);
 
-        cardLayout = new CardLayout();
-        mainPanel = new JPanel(cardLayout);
+        HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
 
-        // Screens
-         WelcomePanel welcomePanel = new WelcomePanel(this);
-        LoginPanel loginPanel = new LoginPanel(this);
-        // Add Home after login
-        // HomePanel homePanel = new HomePanel(this);
-        SignUp signupPanel = new SignUp(this);
+        // Define context (route)
+        server.createContext("/", new RootHandler());
+        server.createContext("/login", new LoginHandler());
 
-        mainPanel.add(welcomePanel, "welcome");
-        mainPanel.add(loginPanel, "login");
-        // mainPanel.add(homePanel, "home");
-        mainPanel.add(signupPanel, "signup");
-
-        frame.add(mainPanel);
-        frame.setVisible(true);
-    }
-
-    public void showScreen(String name) {
-        cardLayout.show(mainPanel, name);
-    }
-
-    public void addPanel(JPanel panel, String name) {
-        mainPanel.add(panel, name);
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(Main::new);
-    }
-}
-
-
-class WelcomePanel extends JPanel {
-    public WelcomePanel(Main mainApp) {
-        setLayout(new FlowLayout());
-
-        JLabel label = new JLabel("Welcome! Please login.");
-        JButton loginButton = new JButton("Login");
-        JButton signupButton = new JButton("SignUp");
-
-        loginButton.addActionListener(e -> {
-            mainApp.showScreen("login");
-        });
-        signupButton.addActionListener(e -> {
-            mainApp.showScreen("signup");
-        });
-        add(label);
-        add(loginButton);
-        add(signupButton);
+        // Start server
+        server.setExecutor(null); // creates a default executor
+        System.out.println("Server started at http://localhost:8080/");
+        server.start();
     }
 }
