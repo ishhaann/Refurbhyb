@@ -64,6 +64,13 @@ CREATE TABLE Session (
     FOREIGN KEY (uid) REFERENCES User(uid) ON DELETE CASCADE
 );
 
+CREATE TABLE Files (
+    id VARCHAR(36) PRIMARY KEY,
+    item_id VARCHAR(36),
+    file LONGBLOB NOT NULL,
+    FOREIGN KEY (item_id) REFERENCES Item(id) ON DELETE CASCADE
+);
+
 CREATE TABLE Metadata(
     `key` VARCHAR(50) PRIMARY KEY,
     `value` VARCHAR(50)

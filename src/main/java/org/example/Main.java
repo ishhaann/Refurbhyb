@@ -5,8 +5,7 @@ import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
-import org.example.routes.LoginHandler;
-import org.example.routes.RootHandler;
+import org.example.routes.*;
 
 public class Main {
     public static Database db;
@@ -18,6 +17,10 @@ public class Main {
         // Define context (route)
         server.createContext("/", new RootHandler());
         server.createContext("/login", new LoginHandler());
+        server.createContext("/home", new HomeHandler());
+        server.createContext("/search", new SearchHandler());
+        server.createContext("/image", new ImageHandler());
+        server.createContext("/item", new ItemHandler());
 
         // Start server
         server.setExecutor(null); // creates a default executor

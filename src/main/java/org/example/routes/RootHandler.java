@@ -6,6 +6,7 @@ import org.example.Utils;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Map;
 
 // Root page handler
 public class RootHandler implements HttpHandler {
