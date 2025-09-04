@@ -21,6 +21,7 @@ public class Main {
         server.createContext("/search", new SearchHandler());
         server.createContext("/image", new ImageHandler());
         server.createContext("/item", new ItemHandler());
+        server.createContext("/signup", new SignUpHandler());
 
         // Start server
         server.setExecutor(null); // creates a default executor

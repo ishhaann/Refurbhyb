@@ -86,9 +86,8 @@ public class Database implements AutoCloseable {
             return uid;
         } catch (SQLException e) {
             System.err.println("Error creating user: " + e.getMessage());
+            throw new RuntimeException(e);
         }
-
-        return null;
     }
 
     public List<String> getConditions() {
