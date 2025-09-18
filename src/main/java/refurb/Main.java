@@ -1,8 +1,6 @@
 package refurb;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 enum Role {
     BUYER, SELLER, ADMIN
@@ -76,84 +74,11 @@ class Product {
     }
 }
 
-// ===== CLASS: UserStore =====
-class UserStore {
-    private final List<User> users = new ArrayList<>();
-    private final AtomicInteger idSeq = new AtomicInteger(1);
-
-    public UserStore() {
-        // Default demo users
-        register("Admin", "admin@refurbhub.com", "9999999999", Role.ADMIN, "admin123");
-        register("Alice Seller", "alice@refurbhub.com", "8888888888", Role.SELLER, "alice123");
-        register("Bob Buyer", "bob@refurbhub.com", "7777777777", Role.BUYER, "bob123");
-    }
-
-    public User register(String name, String email, String phone, Role role, String password) {
-        for (User u : users) {
-            if (u.getEmail().equalsIgnoreCase(email)) return null;
-        }
-        User u = new User(idSeq.getAndIncrement(), name, email, phone, role, password);
-        users.add(u);
-        return u;
-    }
-
-    public User login(String email, String password) {
-        for (User u : users) {
-            if (u.getEmail().equalsIgnoreCase(email) && u.getPassword().equals(password)) {
-                return u;
-            }
-        }
-        return null;
-    }
-
-    public List<User> all() { return users; }
-}
-
-// ===== CLASS: ProductStore =====
-class ProductStore {
-    private final List<Product> products = new ArrayList<>();
-    private final AtomicInteger idSeq = new AtomicInteger(1001);
-
-    public ProductStore() {
-        // Seed demo products
-        add("iPhone 12", "64GB, minimal scratches", 28000, "Good", "Phone", 2, "alice@refurbhub.com / 8888888888");
-        add("Dell Latitude 7490", "i5, 16GB RAM, 512GB SSD", 25000, "Very Good", "Laptop", 2, "alice@refurbhub.com / 8888888888");
-    }
-
-    public Product add(String name, String desc, double price, String condition, String category,
-                       int sellerUserId, String sellerContact) {
-        Product p = new Product(idSeq.getAndIncrement(), name, desc, price, condition, category, sellerUserId, sellerContact);
-        products.add(p);
-        return p;
-    }
-
-    public boolean removeById(int id, int requesterUserId, boolean isAdmin) {
-        return products.removeIf(p -> p.getId() == id && (isAdmin || p.toString().contains("sellerUserId=" + requesterUserId)));
-    }
-
-    public List<Product> all() { return products; }
-
-    public List<Product> search(String keyword) {
-        String q = keyword.toLowerCase();
-        return products.stream().filter(p ->
-                p.getName().toLowerCase().contains(q) ||
-                        p.getCategory().toLowerCase().contains(q) ||
-                        p.toString().toLowerCase().contains(q)
-        ).collect(Collectors.toList());
-    }
-
-    public Product findById(int id) {
-        for (Product p : products) if (p.getId() == id) return p;
-        return null;
-    }
-}
-
 // ===== MAIN APP =====
 public class Main {
     private final Scanner in = new Scanner(System.in);
-    private final UserStore userStore = new UserStore();
-    private final ProductStore productStore = new ProductStore();
     private User currentUser = null;
+    private Database db = new Database("jdbc:mysql://mysql-project-hoby.c.aivencloud.com:28313/defaultdb?user=avnadmin&password=mypass");
 
     public static void main(String[] args) {
         new Main().run();
@@ -187,7 +112,7 @@ public class Main {
         switch (ch) {
             case 1 -> doRegister();
             case 2 -> doLogin();
-            case 3 -> showProducts(productStore.all());
+            case 3 -> showProducts(db.allProducts());
             case 4 -> doSearch();
             case 0 -> { return false; }
             default -> System.out.println("Invalid choice.");
@@ -203,7 +128,7 @@ public class Main {
         System.out.println("9) Logout");
         int ch = askInt("Choose: ");
         switch (ch) {
-            case 1 -> showProducts(productStore.all());
+            case 1 -> showProducts(db.allProducts());
             case 2 -> doSearch();
             case 3 -> getContact();
             case 9 -> logout();
@@ -219,7 +144,7 @@ public class Main {
         int ch = askInt("Choose: ");
         switch (ch) {
             case 1 -> addProduct();
-            case 2 -> showProducts(productStore.all());
+            case 2 -> showProducts(db.allProducts());
             case 3 -> removeProduct(false);
             case 9 -> logout();
         }
@@ -233,8 +158,8 @@ public class Main {
         System.out.println("9) Logout");
         int ch = askInt("Choose: ");
         switch (ch) {
-            case 1 -> userStore.all().forEach(System.out::println);
-            case 2 -> showProducts(productStore.all());
+            case 1 -> db.allUsers().forEach(System.out::println);
+            case 2 -> showProducts(db.allProducts());
             case 3 -> removeProduct(true);
             case 9 -> logout();
         }
@@ -249,7 +174,7 @@ public class Main {
         int r = askInt("");
         Role role = (r == 2) ? Role.SELLER : Role.BUYER;
         String pw = ask("Password: ");
-        User u = userStore.register(name, email, phone, role, pw);
+        User u = db.register(name, email, phone, role, pw);
         if (u == null) System.out.println("Email already exists.");
         else System.out.println("Registered successfully.");
     }
@@ -257,7 +182,7 @@ public class Main {
     private void doLogin() {
         String email = ask("Email: ");
         String pw = ask("Password: ");
-        User u = userStore.login(email, pw);
+        User u = db.login(email, pw);
         if (u != null) {
             currentUser = u;
             System.out.println("Welcome, " + u.getName() + " (" + u.getRole() + ")");
@@ -273,24 +198,24 @@ public class Main {
         String condition = ask("Condition: ");
         String category = ask("Category: ");
         String contact = ask("Contact (email/phone): ");
-        Product p = productStore.add(name, desc, price, condition, category, currentUser.getId(), contact);
+        Product p = db.addProduct(name, desc, price, condition, category, currentUser.getId(), contact);
         System.out.println("Product added with ID " + p.getId());
     }
 
     private void removeProduct(boolean admin) {
         int id = askInt("Enter product ID: ");
-        boolean ok = productStore.removeById(id, currentUser.getId(), admin);
+        boolean ok = db.removeProduct(id, currentUser.getId(), admin);
         System.out.println(ok ? "Removed." : "Not found.");
     }
 
     private void doSearch() {
         String q = ask("Search keyword: ");
-        showProducts(productStore.search(q));
+        showProducts(db.searchProducts(q));
     }
 
     private void getContact() {
         int id = askInt("Enter Product ID: ");
-        Product p = productStore.findById(id);
+        Product p = db.findProductById(id);
         if (p != null) System.out.println("Seller contact: " + p.getSellerContact());
         else System.out.println("Not found.");
     }
