@@ -49,6 +49,7 @@ CREATE TABLE `Order` (
     uid VARCHAR(36), -- ID of user who bought the item
     item_id VARCHAR(36), -- id from Item table
     quantity INT DEFAULT 1, -- No of items
+    transaction_id VARCHAR(255),
     payment_success TINYINT DEFAULT 0, -- if customer done the payment
     shipped TINYINT DEFAULT 0, -- if item is shipped(1) or not (0)
     tracking_id VARCHAR(255) DEFAULT NULL, -- id to track shipment
@@ -62,6 +63,13 @@ CREATE TABLE Session (
     sid VARCHAR(36) PRIMARY KEY,
     uid VARCHAR(36),
     FOREIGN KEY (uid) REFERENCES User(uid) ON DELETE CASCADE
+);
+
+CREATE TABLE Files (
+    id VARCHAR(36) PRIMARY KEY,
+    item_id VARCHAR(36),
+    file LONGBLOB NOT NULL,
+    FOREIGN KEY (item_id) REFERENCES Item(id) ON DELETE CASCADE
 );
 
 CREATE TABLE Metadata(

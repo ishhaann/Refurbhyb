@@ -35,7 +35,7 @@ public class Database implements AutoCloseable {
         return null; // no match found
     }
 
-    String validate(String sid) {
+    public String validate(String sid) {
         String sql = "SELECT uid FROM Session WHERE sid=?";
 
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -53,7 +53,7 @@ public class Database implements AutoCloseable {
         return null; // no match found
     }
 
-    String getSession(String userId) {
+    public String getSession(String userId) {
         String uuidv4 = UUID.randomUUID().toString();
         String sql = "INSERT INTO Session VALUES (?,?)";
 
@@ -91,8 +91,8 @@ public class Database implements AutoCloseable {
         return null;
     }
 
-    List<String> getConditions() {
-        List<String> conditions = new ArrayList<>();
+    public String[] getConditions() {
+        List<String> conditions = new ArrayList<String>();
         String sql = "SELECT `condition` FROM Conditions";
 
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -105,27 +105,27 @@ public class Database implements AutoCloseable {
         } catch (SQLException e) {
             System.err.println("Error fetching conditions list: " + e.getMessage());
         }
-        return conditions;
+        return conditions.toArray(new String[0]);
     }
 
-    Map<Integer, String> getCategories() {
-        Map<Integer, String> categories = new HashMap<>();
+    public Types.KeyValue[] getCategories() {
+        List<Types.KeyValue> categories = new ArrayList<>();
         String sql = "SELECT id, name FROM Category";
 
         try (PreparedStatement pstmt = conn.prepareStatement(sql);
              ResultSet rs = pstmt.executeQuery()) {
 
             while (rs.next()) {
-                categories.put(rs.getInt("id"), rs.getString("name"));
+                categories.add(new Types.KeyValue(rs.getInt("id"), rs.getString("name")));
             }
         } catch (SQLException e) {
             System.err.println("Error fetching categories: " + e.getMessage());
         }
 
-        return categories;
+        return categories.toArray(new Types.KeyValue[0]);
     }
 
-    String addItem(String name, String model, int categoryId, String description,
+    public String addItem(String name, String model, int categoryId, String description,
                    int price, String warranty, String condition, String seller, int quantity) {
         String uuidv4 = UUID.randomUUID().toString();
 
@@ -156,7 +156,7 @@ public class Database implements AutoCloseable {
         return null;
     }
 
-    List<Types.Item> getItems(String userId) {
+    public List<Types.Item> getItems(String userId) {
         List<Types.Item> items = new ArrayList<Types.Item>();
         String sql = "SELECT * FROM Item where seller=?";
 
@@ -172,6 +172,23 @@ public class Database implements AutoCloseable {
             System.err.println("Error fetching items: " + e.getMessage());
         }
         return items;
+    }
+
+    public Types.Item getItem(String itemId) {
+        String sql = "SELECT * FROM Item where id=?";
+
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, itemId);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if(rs.next()) {
+                    return Types.Item.fromResultSet(rs);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error fetching items: " + e.getMessage());
+        }
+        return null;
     }
 
     public List<Types.Item> searchItem(String keyword, int offset, int limit, Integer price) {
@@ -214,6 +231,22 @@ public class Database implements AutoCloseable {
         return items;
     }
 
+    public Types.Item searchItem(String id) {
+        String sql = "SELECT * FROM Item WHERE id=?";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, id);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return Types.Item.fromResultSet(rs);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error searching items: " + e.getMessage());
+        }
+
+        return null;
+    }
+
     public Types.User getUserProfile(String userId) {
         String sql = "SELECT * FROM User WHERE uid=?";
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -229,7 +262,7 @@ public class Database implements AutoCloseable {
         return null;
     }
 
-    boolean addToCart(String userId, String itemId, int quantity) {
+    public boolean addToCart(String userId, String itemId, int quantity) {
         String sql = "INSERT INTO Cart (uid, item_id, quantity) VALUES (?, ?, ?)";
 
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -244,7 +277,7 @@ public class Database implements AutoCloseable {
         }
     }
 
-    boolean removeFromCart(String userId, String itemId) {
+    public boolean removeFromCart(String userId, String itemId) {
         String sql = "DELETE FROM Cart WHERE uid = ? AND item_id = ?";
 
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -257,7 +290,7 @@ public class Database implements AutoCloseable {
         }
     }
 
-    List<Types.CartItem> getCartItems(String userId) {
+    public List<Types.CartItem> getCartItems(String userId) {
         List<Types.CartItem> cartItems = new ArrayList<>();
         String sql = """
         SELECT i.* , c.quantity
@@ -283,9 +316,118 @@ public class Database implements AutoCloseable {
         return cartItems;
     }
 
-    // ToDo: Add Orders
-    // Update Payment Status
-    // Update Tracking ID and Partner
+    public byte[] getFile(String fileId) {
+        String sql = "SELECT file FROM Files WHERE id=?";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, fileId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getBytes("file");
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error fetching file: " + e.getMessage());
+        }
+        return null;
+    }
+
+    public String[] getFileIds(String item_id) {
+        List<String> fileList = new ArrayList<>();
+        String sql = "SELECT id FROM Files WHERE item_id=?";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, item_id);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    fileList.add(rs.getString("id"));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error fetching file: " + e.getMessage());
+        }
+        return fileList.toArray(new String[0]);
+    }
+
+    public boolean uploadFile(String itemId, byte[] fileData) {
+        String sql = "INSERT INTO Files (id, item_id, file) VALUES (?, ?, ?)";
+
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            String uuidv4 = UUID.randomUUID().toString();
+            pstmt.setString(1, uuidv4);
+            pstmt.setString(2, itemId);
+            pstmt.setBytes(3, fileData);
+
+            int affectedRows = pstmt.executeUpdate();
+            return affectedRows > 0;
+        } catch (SQLException e) {
+            System.err.println("Error uploading file: " + e.getMessage());
+        }
+        return false;
+    }
+
+    public boolean placeOrder(String userId, String itemId, int quantity, String transactionId) {
+        String sql = "INSERT INTO `Order` (uid, item_id, quantity, transaction_id) VALUES (?, ?, ?, ?)";
+
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, userId);
+            pstmt.setString(2, itemId);
+            pstmt.setInt(3, quantity);
+            pstmt.setString(4, transactionId);
+            pstmt.executeUpdate();
+            return true;
+        } catch (SQLException e) {
+            System.err.println("Error adding to cart: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public List<Types.OrderItem> getUserOrders(String userId, String sellerId) {
+        List<Types.OrderItem> items = new ArrayList<Types.OrderItem>();
+        String sql = "SELECT * FROM `Order`";
+        if(userId != null){
+            sql+=" WHERE uid=?";
+        } else if(sellerId != null){
+            sql+=" WHERE item_id IN ( SELECT id FROM Item WHERE seller = ?)";
+        }
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, userId!=null?userId: sellerId);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while(rs.next()) {
+                    items.add(Types.OrderItem.fromResultSet(rs));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error fetching items: " + e.getMessage());
+        }
+        return items;
+    }
+
+    public boolean verifyPaymentAndShip(int orderId, String trackingId, String partner) {
+        String sql = "UPDATE `Order` SET payment_success=1, shipped=1, tracking_id=?, shipping_partner=? where id=?";
+
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, trackingId);
+            pstmt.setString(2, partner);
+            pstmt.setInt(3, orderId);
+            pstmt.executeUpdate();
+            return true;
+        } catch (SQLException e) {
+            System.err.println("Error adding to cart: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean removeItem(String itemId) {
+        String sql = "DELETE FROM Item WHERE id = ?";
+
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, itemId);
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Error removing from cart: " + e.getMessage());
+            return false;
+        }
+    }
 
     @Override
     public void close() throws SQLException {
