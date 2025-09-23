@@ -68,10 +68,10 @@ class WelcomePanel extends JPanel {
         JButton loginButton = new JButton("Login");
         JButton signupButton = new JButton("SignUp");
 
-        loginButton.addActionListener(e -> {
+        loginButton.addActionListener(_ -> {
             mainApp.showScreen("login");
         });
-        signupButton.addActionListener(e -> {
+        signupButton.addActionListener(_ -> {
             mainApp.showScreen("signup");
         });
         add(label);

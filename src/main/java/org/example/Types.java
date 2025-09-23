@@ -59,4 +59,43 @@ public class Types {
     }
 
     public record CartItem( Item item, Integer quantity){}
+
+    public record OrderItem(
+    int id,
+    String uid,
+    String item_id,
+    int quantity,
+    String transaction_id,
+    boolean payment_success,
+    boolean shipped,
+    String tracking_id,
+    String shipping_partner,
+    LocalDateTime created_at){
+        public static OrderItem fromResultSet(ResultSet rs) throws SQLException {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            LocalDateTime orderDate = rs.getString("created_at") != null
+                    ? LocalDateTime.parse(rs.getString("created_at"), formatter)
+                    : null;
+            return new OrderItem(
+                rs.getInt("id"),
+                rs.getString("uid"),
+                rs.getString("item_id"),
+                rs.getInt("quantity"),
+                rs.getString("transaction_id"),
+                rs.getBoolean("payment_success"),
+                rs.getBoolean("shipped"),
+                rs.getString("tracking_id"),
+                rs.getString("shipping_partner"),
+                orderDate
+            );
+        }
+    }
+
+    public record KeyValue(int key, String value) {
+    @Override
+    public String toString() {
+        return value;
+    }
+    }
+
 }
