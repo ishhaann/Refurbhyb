@@ -6,7 +6,18 @@ import org.example.Main;
 
 public class SignUp extends JPanel {
     public SignUp(Main mainApp) {
-        setLayout(new GridLayout(6, 2, 5, 5));
+        setLayout(new BorderLayout(10, 10));
+        setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        // Top panel: Back button
+        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JButton backBtn = new JButton("⬅ Back");
+        backBtn.addActionListener(_ -> mainApp.showScreen("welcome"));
+        topPanel.add(backBtn);
+        add(topPanel, BorderLayout.NORTH);
+
+        // Center panel
+        JPanel formPanel = new JPanel(new GridLayout(6, 2, 5, 5));
 
         JLabel userLabel = new JLabel("Email:");
         JTextField userField = new JTextField();
@@ -25,7 +36,7 @@ public class SignUp extends JPanel {
 
         JButton signUp = new JButton("Sign Up");
 
-        signUp.addActionListener(e -> {
+        signUp.addActionListener(_ -> {
             String email = userField.getText();
             String name = nameField.getText();
             String phoneNo = phoneField.getText();
@@ -37,17 +48,19 @@ public class SignUp extends JPanel {
             mainApp.showScreen("login");
         });
 
-        add(userLabel);
-        add(userField);
-        add(nameLabel);
-        add(nameField);
-        add(phoneLabel);
-        add(phoneField);
-        add(passLabel);
-        add(passField);
-        add(addressLabel);
-        add(addressField);
-        add(new JLabel()); // empty cell
-        add(signUp);
+        formPanel.add(userLabel);
+        formPanel.add(userField);
+        formPanel.add(nameLabel);
+        formPanel.add(nameField);
+        formPanel.add(phoneLabel);
+        formPanel.add(phoneField);
+        formPanel.add(passLabel);
+        formPanel.add(passField);
+        formPanel.add(addressLabel);
+        formPanel.add(addressField);
+        formPanel.add(new JLabel());
+        formPanel.add(signUp);
+
+        add(formPanel, BorderLayout.CENTER);
     }
 }
