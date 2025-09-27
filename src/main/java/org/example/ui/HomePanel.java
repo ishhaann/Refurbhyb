@@ -11,42 +11,73 @@ public class HomePanel extends JPanel {
     public HomePanel(Main mainApp) {
         this.mainApp = mainApp;
         setLayout(new BorderLayout(10, 10));
+        setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // Top panel for search
-        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
-        JTextField searchField = new JTextField(20);
+        // Container for top panels
+        JPanel topContainer = new JPanel();
+        topContainer.setLayout(new BoxLayout(topContainer, BoxLayout.Y_AXIS));
+        add(topContainer, BorderLayout.NORTH);
+
+        // Top panel 1
+        JPanel quickPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        JButton myOrdersButton = new JButton("📦 My Orders");
+        JButton logOutButton = new JButton("LogOut");
+
+        quickPanel.add(myOrdersButton);
+        quickPanel.add(logOutButton);
+
+        topContainer.add(quickPanel);
+
+        // Top panel 2
+        JPanel searchPanel = new JPanel(new BorderLayout(5, 0));
+        JTextField searchField = new JTextField();
         JButton searchButton = new JButton("🔍");
-        topPanel.add(searchField);
-        topPanel.add(searchButton);
+        searchPanel.add(searchField, BorderLayout.CENTER);
+        searchPanel.add(searchButton, BorderLayout.EAST);
 
-        add(topPanel, BorderLayout.NORTH);
+        topContainer.add(searchPanel);
+        topContainer.add(Box.createVerticalStrut(10));
 
-        // Center panel for results or welcome message
-        resultsContainer = new JPanel(new BorderLayout());
+        // Center panel
+        resultsContainer = new JPanel();
+        resultsContainer.setLayout(new BoxLayout(resultsContainer, BoxLayout.Y_AXIS));
+        JScrollPane scrollPane = new JScrollPane(resultsContainer);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        add(scrollPane, BorderLayout.CENTER);
+
         JLabel welcomeLabel = new JLabel("Welcome, " + mainApp.user.name());
-        welcomeLabel.setFont(new Font("Arial", Font.BOLD, 16));
-        resultsContainer.add(welcomeLabel, BorderLayout.CENTER);
+        welcomeLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        resultsContainer.add(Box.createVerticalStrut(20));
+        resultsContainer.add(welcomeLabel);
+        resultsContainer.add(Box.createVerticalStrut(20));
 
-        add(resultsContainer, BorderLayout.CENTER);
-
-        // Search action
+        // Button actions
         searchButton.addActionListener(_ -> {
             String keyword = searchField.getText().trim();
             if (!keyword.isEmpty()) {
                 showSearchResults(keyword);
             }
         });
+
+        myOrdersButton.addActionListener(_ -> {
+            MyOrdersPanel myOrders = new MyOrdersPanel(mainApp);
+            mainApp.addPanel(myOrders, "MyOrder");
+            mainApp.showScreen("MyOrder");
+        });
+
+        logOutButton.addActionListener(_ -> {
+            mainApp.user = null;
+            mainApp.showScreen("welcome");
+        });
     }
 
     private void showSearchResults(String keyword) {
-        // Remove old results
         resultsContainer.removeAll();
-
-        // Create new Search panel
         Search searchPanel = new Search(mainApp, keyword, null);
-        resultsContainer.add(searchPanel, BorderLayout.CENTER);
-
-        // Refresh UI
+        searchPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        resultsContainer.add(Box.createVerticalStrut(10));
+        resultsContainer.add(searchPanel);
+        resultsContainer.add(Box.createVerticalGlue());
         resultsContainer.revalidate();
         resultsContainer.repaint();
     }
