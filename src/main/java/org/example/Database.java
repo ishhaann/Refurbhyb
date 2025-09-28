@@ -375,7 +375,7 @@ public class Database implements AutoCloseable {
             pstmt.executeUpdate();
             return true;
         } catch (SQLException e) {
-            System.err.println("Error adding to cart: " + e.getMessage());
+            System.err.println("Error placing order: " + e.getMessage());
             return false;
         }
     }
@@ -412,7 +412,7 @@ public class Database implements AutoCloseable {
             pstmt.executeUpdate();
             return true;
         } catch (SQLException e) {
-            System.err.println("Error adding to cart: " + e.getMessage());
+            System.err.println("Error updating order: " + e.getMessage());
             return false;
         }
     }
