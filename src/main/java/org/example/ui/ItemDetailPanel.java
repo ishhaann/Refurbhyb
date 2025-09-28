@@ -67,7 +67,7 @@ public class ItemDetailPanel extends JPanel {
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 5));
 
         JButton backBtn = new JButton("⬅ Back");
-        backBtn.addActionListener(e -> mainApp.showScreen("home"));
+        backBtn.addActionListener(_ -> mainApp.showScreen("home"));
 
         JButton buyBtn = new JButton("🛒 Buy Now");
         buyBtn.addActionListener(_ -> {
