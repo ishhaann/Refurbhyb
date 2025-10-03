@@ -1,5 +1,153 @@
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
+// ===== ENUM: Role =====
+enum Role {
+    BUYER, SELLER, ADMIN
+}
+
+// ===== CLASS: User =====
+class User {
+    private final int id;
+    private String name;
+    private String email;
+    private String phone;
+    private Role role;
+    private String password;
+
+    public User(int id, String name, String email, String phone, Role role, String password) {
+        this.id = id;
+        this.name = name;
+        this.email = email.toLowerCase();
+        this.phone = phone;
+        this.role = role;
+        this.password = password;
+    }
+
+    public int getId() { return id; }
+    public String getName() { return name; }
+    public String getEmail() { return email; }
+    public String getPhone() { return phone; }
+    public Role getRole() { return role; }
+    public String getPassword() { return password; }
+
+    @Override
+    public String toString() {
+        return "User{id=" + id + ", name='" + name + "', email='" + email + "', phone='" + phone + "', role=" + role + "}";
+    }
+}
+
+// ===== CLASS: Product =====
+class Product {
+    private final int id;
+    private String name;
+    private String description;
+    private double price;
+    private String condition;
+    private String category;
+    private int sellerUserId;
+    private String sellerContact;
+
+    public Product(int id, String name, String description, double price, String condition,
+                   String category, int sellerUserId, String sellerContact) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+        this.price = price;
+        this.condition = condition;
+        this.category = category;
+        this.sellerUserId = sellerUserId;
+        this.sellerContact = sellerContact;
+    }
+
+    public int getId() { return id; }
+    public String getName() { return name; }
+    public double getPrice() { return price; }
+    public String getCondition() { return condition; }
+    public String getCategory() { return category; }
+    public String getSellerContact() { return sellerContact; }
+
+    @Override
+    public String toString() {
+        return "Product{id=" + id + ", name='" + name + "', price=" + price +
+                ", condition='" + condition + "', category='" + category + "'}";
+    }
+}
+
+// ===== CLASS: UserStore =====
+class UserStore {
+    private final List<User> users = new ArrayList<>();
+    private final AtomicInteger idSeq = new AtomicInteger(1);
+
+    public UserStore() {
+        // Default demo users
+        register("Admin", "admin@refurbhub.com", "9999999999", Role.ADMIN, "admin123");
+        register("Alice Seller", "alice@refurbhub.com", "8888888888", Role.SELLER, "alice123");
+        register("Bob Buyer", "bob@refurbhub.com", "7777777777", Role.BUYER, "bob123");
+    }
+
+    public User register(String name, String email, String phone, Role role, String password) {
+        for (User u : users) {
+            if (u.getEmail().equalsIgnoreCase(email)) return null;
+        }
+        User u = new User(idSeq.getAndIncrement(), name, email, phone, role, password);
+        users.add(u);
+        return u;
+    }
+
+    public User login(String email, String password) {
+        for (User u : users) {
+            if (u.getEmail().equalsIgnoreCase(email) && u.getPassword().equals(password)) {
+                return u;
+            }
+        }
+        return null;
+    }
+
+    public List<User> all() { return users; }
+}
+
+// ===== CLASS: ProductStore =====
+class ProductStore {
+    private final List<Product> products = new ArrayList<>();
+    private final AtomicInteger idSeq = new AtomicInteger(1001);
+
+    public ProductStore() {
+        // Seed demo products
+        add("iPhone 12", "64GB, minimal scratches", 28000, "Good", "Phone", 2, "alice@refurbhub.com / 8888888888");
+        add("Dell Latitude 7490", "i5, 16GB RAM, 512GB SSD", 25000, "Very Good", "Laptop", 2, "alice@refurbhub.com / 8888888888");
+    }
+
+    public Product add(String name, String desc, double price, String condition, String category,
+                       int sellerUserId, String sellerContact) {
+        Product p = new Product(idSeq.getAndIncrement(), name, desc, price, condition, category, sellerUserId, sellerContact);
+        products.add(p);
+        return p;
+    }
+
+    public boolean removeById(int id, int requesterUserId, boolean isAdmin) {
+        return products.removeIf(p -> p.getId() == id && (isAdmin || p.toString().contains("sellerUserId=" + requesterUserId)));
+    }
+
+    public List<Product> all() { return products; }
+
+    public List<Product> search(String keyword) {
+        String q = keyword.toLowerCase();
+        return products.stream().filter(p ->
+                p.getName().toLowerCase().contains(q) ||
+                p.getCategory().toLowerCase().contains(q) ||
+                p.toString().toLowerCase().contains(q)
+        ).collect(Collectors.toList());
+    }
+
+    public Product findById(int id) {
+        for (Product p : products) if (p.getId() == id) return p;
+        return null;
+    }
+}
+
+// ===== MAIN APP =====
 public class RefurbHubApp {
     private final Scanner in = new Scanner(System.in);
     private final UserStore userStore = new UserStore();
@@ -11,7 +159,7 @@ public class RefurbHubApp {
     }
 
     private void run() {
-        System.out.println("=== RefurbHub (OLX-style) ===");
+        System.out.println("=== RefurbHub  ===");
         boolean running = true;
         while (running) {
             if (currentUser == null) running = guestMenu();
@@ -26,7 +174,7 @@ public class RefurbHubApp {
         System.out.println("Goodbye!");
     }
 
-    // Guest Menu
+    // --- Menus ---
     private boolean guestMenu() {
         System.out.println("\n-- Guest Menu --");
         System.out.println("1) Register");
@@ -46,7 +194,6 @@ public class RefurbHubApp {
         return true;
     }
 
-    // Buyer Menu
     private void buyerMenu() {
         System.out.println("\n-- Buyer Menu (" + currentUser.getName() + ") --");
         System.out.println("1) Browse all products");
@@ -62,7 +209,6 @@ public class RefurbHubApp {
         }
     }
 
-    // Seller Menu
     private void sellerMenu() {
         System.out.println("\n-- Seller Menu (" + currentUser.getName() + ") --");
         System.out.println("1) Add product");
@@ -78,7 +224,6 @@ public class RefurbHubApp {
         }
     }
 
-    // Admin Menu
     private void adminMenu() {
         System.out.println("\n-- Admin Menu (" + currentUser.getName() + ") --");
         System.out.println("1) View all users");
@@ -94,7 +239,7 @@ public class RefurbHubApp {
         }
     }
 
-    // Actions
+    // --- Actions ---
     private void doRegister() {
         String name = ask("Name: ");
         String email = ask("Email: ");
@@ -159,7 +304,7 @@ public class RefurbHubApp {
         }
     }
 
-    // Helpers
+    // --- Helpers ---
     private String ask(String prompt) {
         System.out.print(prompt);
         return in.nextLine().trim();
@@ -179,3 +324,4 @@ public class RefurbHubApp {
         }
     }
 }
+
