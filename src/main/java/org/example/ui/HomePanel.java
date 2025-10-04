@@ -5,49 +5,57 @@ import java.awt.*;
 import org.example.Main;
 
 public class HomePanel extends JPanel {
-    private JPanel resultsContainer;
-    private Main mainApp;
+    private final Main mainApp;
 
     public HomePanel(Main mainApp) {
         this.mainApp = mainApp;
-        setLayout(new BorderLayout(10, 10));
+        setLayout(new BorderLayout());
 
-        // Top panel for search
-        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
-        JTextField searchField = new JTextField(20);
-        JButton searchButton = new JButton("🔍");
-        topPanel.add(searchField);
-        topPanel.add(searchButton);
-
+        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
+        JButton myOrdersButton = new JButton("My Orders");
+        JButton logoutButton = new JButton("Logout");
+        topPanel.add(myOrdersButton);
+        topPanel.add(logoutButton);
         add(topPanel, BorderLayout.NORTH);
 
-        // Center panel for results or welcome message
-        resultsContainer = new JPanel(new BorderLayout());
-        JLabel welcomeLabel = new JLabel("Welcome, " + mainApp.user.name());
-        welcomeLabel.setFont(new Font("Arial", Font.BOLD, 16));
-        resultsContainer.add(welcomeLabel, BorderLayout.CENTER);
+        JPanel homeView = createHomeView();
 
-        add(resultsContainer, BorderLayout.CENTER);
+        add(homeView, BorderLayout.CENTER);
 
-        // Search action
-        searchButton.addActionListener(_ -> {
-            String keyword = searchField.getText().trim();
-            if (!keyword.isEmpty()) {
-                showSearchResults(keyword);
-            }
+        JPanel bottomNav = new JPanel(new FlowLayout(FlowLayout.CENTER, 30, 10));
+        JButton homeButton = new JButton("🏠 Home");
+        JButton searchButton = new JButton("🔍 Search");
+        bottomNav.add(homeButton);
+        bottomNav.add(searchButton);
+        add(bottomNav, BorderLayout.SOUTH);
+
+        SearchPanel searchPanel = new SearchPanel(mainApp);
+        mainApp.addPanel(searchPanel, "search");
+
+        searchButton.addActionListener(_ -> mainApp.showScreen("search"));
+
+        logoutButton.addActionListener(_ -> {
+            mainApp.user = null;
+            mainApp.showScreen("welcome");
+        });
+
+        myOrdersButton.addActionListener(_ -> {
+            MyOrdersPanel myOrders = new MyOrdersPanel(mainApp);
+            mainApp.addPanel(myOrders, "MyOrder");
+            mainApp.showScreen("MyOrder");
         });
     }
 
-    private void showSearchResults(String keyword) {
-        // Remove old results
-        resultsContainer.removeAll();
+    private JPanel createHomeView() {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
-        // Create new Search panel
-        Search searchPanel = new Search(mainApp, keyword, null);
-        resultsContainer.add(searchPanel, BorderLayout.CENTER);
+        JLabel welcomeLabel = new JLabel("Welcome, " + mainApp.user.name(), SwingConstants.CENTER);
+        welcomeLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        panel.add(Box.createVerticalStrut(40));
+        panel.add(welcomeLabel);
+        panel.add(Box.createVerticalGlue());
 
-        // Refresh UI
-        resultsContainer.revalidate();
-        resultsContainer.repaint();
+        return panel;
     }
 }
