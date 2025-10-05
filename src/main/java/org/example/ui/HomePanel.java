@@ -12,9 +12,7 @@ public class HomePanel extends JPanel {
         setLayout(new BorderLayout());
 
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
-        JButton myOrdersButton = new JButton("My Orders");
         JButton logoutButton = new JButton("Logout");
-        topPanel.add(myOrdersButton);
         topPanel.add(logoutButton);
         add(topPanel, BorderLayout.NORTH);
 
@@ -37,12 +35,6 @@ public class HomePanel extends JPanel {
         logoutButton.addActionListener(_ -> {
             mainApp.user = null;
             mainApp.showScreen("welcome");
-        });
-
-        myOrdersButton.addActionListener(_ -> {
-            MyOrdersPanel myOrders = new MyOrdersPanel(mainApp);
-            mainApp.addPanel(myOrders, "MyOrder");
-            mainApp.showScreen("MyOrder");
         });
     }
 

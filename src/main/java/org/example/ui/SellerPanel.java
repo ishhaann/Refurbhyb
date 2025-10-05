@@ -19,24 +19,15 @@ public class SellerPanel extends JPanel {
         JPanel buttons = new JPanel();
         buttons.setLayout(new GridLayout(0, 1, 0, 20)); // one column, variable rows, 20px spacing
 
-        JButton ordersBtn = new JButton("🛒 Orders");
         JButton addItemBtn = new JButton("➕ Add Item");
         JButton myItemsBtn = new JButton("📦 My Items");
         JButton logoutBtn = new JButton("➜ Logout");
 
-        buttons.add(ordersBtn);
         buttons.add(addItemBtn);
         buttons.add(myItemsBtn);
         buttons.add(logoutBtn);
 
         add(buttons, BorderLayout.CENTER);
-
-        // Actions
-        ordersBtn.addActionListener(_ -> {
-            List<Types.OrderItem> sellerOrders = mainApp.db.getUserOrders(null, mainApp.user.uid());
-            mainApp.addPanel(new SellerOrdersPanel(mainApp, sellerOrders), "sellerOrders");
-            mainApp.showScreen("sellerOrders");
-        });
 
         addItemBtn.addActionListener(_ -> {
             mainApp.addPanel(new SellerAddPanel(mainApp), "addItem");

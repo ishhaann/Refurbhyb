@@ -13,6 +13,7 @@ import org.example.Types;
 public class ItemDetailPanel extends JPanel {
 
     public ItemDetailPanel(Main mainApp, Types.Item item) {
+        Types.User seller = mainApp.db.getUserProfile(item.seller());
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
@@ -39,22 +40,16 @@ public class ItemDetailPanel extends JPanel {
         center.add(Box.createVerticalStrut(15));
         center.add(new JLabel("<html><b>Description:</b> " + item.description() + "</html>"));
         center.add(Box.createVerticalStrut(5));
-        center.add(new JLabel("<html><b>Seller:</b> " + item.seller() + "</html>"));
+        center.add(new JLabel("<html><b>Seller Email:</b> " + seller.email() + "</html>"));
+        center.add(new JLabel("<html><b>Seller Phone No:</b> " + seller.phoneNo() + "</html>"));
 
         add(center, BorderLayout.CENTER);
 
         JPanel bottom = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 5));
         JButton backBtn = new JButton("⬅ Back");
         backBtn.addActionListener(_ -> mainApp.showScreen("search"));
-        JButton buyBtn = new JButton("🛒 Buy Now");
-        buyBtn.addActionListener(_ -> {
-            BuyPanel buyPanel = new BuyPanel(mainApp, item);
-            mainApp.addPanel(buyPanel, "buyPanel");
-            mainApp.showScreen("buyPanel");
-        });
 
         bottom.add(backBtn);
-        bottom.add(buyBtn);
         add(bottom, BorderLayout.SOUTH);
     }
 }
