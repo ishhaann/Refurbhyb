@@ -63,6 +63,7 @@ public class SellerOrdersPanel extends JPanel {
                                     "Success",
                                     JOptionPane.INFORMATION_MESSAGE
                             );
+                            mainApp.db.incrementQuantity(order.item_id(), -order.quantity());
                         } else {
                             JOptionPane.showMessageDialog(
                                     this,

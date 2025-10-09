@@ -429,6 +429,20 @@ public class Database implements AutoCloseable {
         }
     }
 
+    public boolean incrementQuantity(String itemId, int quantity) {
+        String sql = "UPDATE Item SET quantity=quantity + ? WHERE id=? AND quantity + ? >= 0";
+
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, quantity);
+            pstmt.setString(2, itemId);
+            pstmt.setInt(3, quantity);
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Error incrementing quantity: " + e.getMessage());
+            return false;
+        }
+    }
+
     @Override
     public void close() throws SQLException {
         if (conn != null) conn.close();
